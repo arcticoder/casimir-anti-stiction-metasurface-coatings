@@ -56,12 +56,18 @@ class StateVector:
 
 @dataclass
 class UQParameters:
-    """Uncertainty quantification parameters"""
+    """Uncertainty quantification parameters with correlation structure"""
     epsilon_uq: float           # UQ uncertainty factor for Casimir force
     delta_material: float       # Material property uncertainty
     sigma_epsilon_prime: float  # Permittivity uncertainty
     sigma_mu_prime: float      # Permeability uncertainty  
     sigma_distance: float      # Distance measurement uncertainty (nm)
+    
+    # CRITICAL FIX: Add correlation parameters
+    rho_epsilon_mu: float      # Correlation coefficient between ε' and μ' 
+    tau_degradation: float     # Time constant for parameter degradation (s)
+    sigma_thermal_drift: float # Thermal drift uncertainty (K/s)
+    correlation_matrix: Optional[np.ndarray] = None  # Full correlation matrix
     
 @dataclass
 class DigitalTwinMetrics:
@@ -95,14 +101,20 @@ class CasimirDigitalTwin:
         # Initialize system matrices
         self._initialize_state_space_matrices()
         
-        # Initialize UQ parameters
+        # Initialize UQ parameters with CRITICAL correlation fixes
         self.uq_params = UQParameters(
             epsilon_uq=0.041,          # 4.1% material uncertainty
             delta_material=0.041,      # 4.1% material variation
             sigma_epsilon_prime=0.1,   # Permittivity std
             sigma_mu_prime=0.08,       # Permeability std
-            sigma_distance=0.06e-3     # 0.06 pm sensor precision
+            sigma_distance=0.06e-3,    # 0.06 pm sensor precision
+            rho_epsilon_mu=-0.7,       # CRITICAL: Metamaterial correlation
+            tau_degradation=86400,     # 1 day degradation time constant
+            sigma_thermal_drift=1e-4   # Thermal drift 0.1 mK/s
         )
+        
+        # CRITICAL FIX: Initialize correlation matrix
+        self._initialize_correlation_structure()
         
         # Initialize Kalman filter
         self._initialize_kalman_filter()
@@ -121,7 +133,8 @@ class CasimirDigitalTwin:
         )
         
         self.current_state = DigitalTwinState.INITIALIZATION
-        logger.info("Digital Twin Framework initialized")
+        self.current_time = 0.0  # Add time tracking for degradation
+        logger.info("Digital Twin Framework initialized with UQ enhancements")
     
     def _initialize_state_space_matrices(self):
         """
@@ -199,11 +212,40 @@ class CasimirDigitalTwin:
         
         logger.info("Kalman filter initialized")
     
+    def _initialize_correlation_structure(self):
+        """
+        CRITICAL FIX: Initialize correlation structure for material parameters
+        
+        Addresses CRITICAL-003: Missing correlation structure in uncertainty propagation
+        Metamaterial parameters ε' and μ' are strongly correlated due to:
+        - Kramers-Kronig relations
+        - Fabrication process dependencies
+        - Geometric scaling effects
+        """
+        # 5x5 correlation matrix for [ε', μ', d, T, ω]
+        self.uq_params.correlation_matrix = np.array([
+            [1.0,  self.uq_params.rho_epsilon_mu, 0.0,  0.1,  0.0],  # ε' correlations
+            [self.uq_params.rho_epsilon_mu,  1.0, 0.0,  0.1,  0.0],  # μ' correlations  
+            [0.0,  0.0,  1.0,  0.2,  0.0],  # d correlations (thermal expansion)
+            [0.1,  0.1,  0.2,  1.0,  0.0],  # T correlations
+            [0.0,  0.0,  0.0,  0.0,  1.0]   # ω correlations (independent)
+        ])
+        
+        # Validate positive definiteness
+        eigenvals = np.linalg.eigvals(self.uq_params.correlation_matrix)
+        if np.any(eigenvals <= 0):
+            logger.warning("Correlation matrix not positive definite, regularizing...")
+            self.uq_params.correlation_matrix += 1e-6 * np.eye(5)
+        
+        logger.info(f"Correlation structure initialized: ρ(ε',μ') = {self.uq_params.rho_epsilon_mu}")
+    
     def calculate_uq_enhanced_force(self, x: np.ndarray, material_params: Dict) -> Tuple[float, float]:
         """
-        Calculate UQ-enhanced total force with uncertainty propagation
+        Calculate UQ-enhanced total force with CRITICAL correlation fixes
         
         F_total = F_Casimir * (1 + ε_UQ) + F_adhesion * (1 + δ_material)
+        
+        CRITICAL FIX: Proper correlation structure for ε' and μ' uncertainties
         
         Parameters:
         - x: Current state vector   
@@ -215,6 +257,7 @@ class CasimirDigitalTwin:
         """
         d = x[0] * 1e-9  # Convert nm to m
         theta_sam = x[3]
+        T = x[4]  # Temperature for time-varying uncertainty
         
         # Base Casimir force calculation (simplified)
         epsilon_prime = material_params.get('epsilon_prime', -2.5)
@@ -231,16 +274,46 @@ class CasimirDigitalTwin:
         # UQ-enhanced total force
         F_total = F_casimir * (1 + self.uq_params.epsilon_uq) + F_adhesion * (1 + self.uq_params.delta_material)
         
-        # Uncertainty propagation: σ_F² = (∂F/∂ε')²σ_ε'² + (∂F/∂μ')²σ_μ'² + (∂F/∂d)²σ_d²
+        # CRITICAL FIX: Correlated uncertainty propagation
+        # Create parameter vector: [ε', μ', d, T]
+        params = np.array([epsilon_prime, mu_prime, d, T])
+        
+        # Partial derivatives
         dF_deps = F_casimir / epsilon_prime * (1 + self.uq_params.epsilon_uq)
         dF_dmu = F_casimir / mu_prime * (1 + self.uq_params.epsilon_uq)  
         dF_dd = -3 * F_casimir / d * (1 + self.uq_params.epsilon_uq)
+        dF_dT = 0.01 * F_casimir * (1 + self.uq_params.epsilon_uq)  # Thermal dependence
         
-        sigma_F_squared = (dF_deps * self.uq_params.sigma_epsilon_prime)**2 + \
-                         (dF_dmu * self.uq_params.sigma_mu_prime)**2 + \
-                         (dF_dd * self.uq_params.sigma_distance * 1e-9)**2
+        # Gradient vector
+        grad_F = np.array([dF_deps, dF_dmu, dF_dd, dF_dT])
         
-        force_uncertainty = np.sqrt(sigma_F_squared)
+        # CRITICAL FIX: Uncertainty covariance matrix with correlations
+        param_stds = np.array([
+            self.uq_params.sigma_epsilon_prime,
+            self.uq_params.sigma_mu_prime,
+            self.uq_params.sigma_distance * 1e-9,  # Convert to meters
+            self.uq_params.sigma_thermal_drift * np.sqrt(abs(T - 298.0))  # Time-varying thermal uncertainty
+        ])
+        
+        # Covariance matrix with correlations
+        if hasattr(self.uq_params, 'correlation_matrix') and self.uq_params.correlation_matrix is not None:
+            # Use subset of correlation matrix [ε', μ', d, T]
+            corr_subset = self.uq_params.correlation_matrix[:4, :4]
+            Sigma_params = np.outer(param_stds, param_stds) * corr_subset
+        else:
+            # Fallback: Diagonal covariance (independence assumption)
+            Sigma_params = np.diag(param_stds**2)
+            logger.warning("Using independence assumption for parameter uncertainties")
+        
+        # Propagate uncertainty: σ_F² = ∇F^T Σ_params ∇F
+        sigma_F_squared = grad_F.T @ Sigma_params @ grad_F
+        force_uncertainty = np.sqrt(abs(sigma_F_squared))  # abs() for numerical stability
+        
+        # HIGH FIX: Add time-varying uncertainty component
+        time_factor = 1.0 + 0.1 * np.exp(-abs(T - 298.0) / self.uq_params.tau_degradation)
+        force_uncertainty *= time_factor
+        
+        logger.debug(f"Force uncertainty: {force_uncertainty:.6e} nN (correlated)")
         
         return F_total, force_uncertainty
     
@@ -267,10 +340,12 @@ class CasimirDigitalTwin:
     
     def adaptive_kalman_update(self, y_measured: np.ndarray) -> np.ndarray:
         """
-        Adaptive Kalman filter update for real-time calibration
+        Adaptive Kalman filter update with HIGH severity UQ fixes
         
         x̂(k|k) = x̂(k|k-1) + K_k(y_k - Cx̂(k|k-1))
         K_k = P(k|k-1)Cᵀ(CP(k|k-1)Cᵀ + R)⁻¹
+        
+        HIGH FIX: Improved process noise adaptation with correlation structure
         
         Parameters:
         - y_measured: Measurement vector
@@ -293,15 +368,44 @@ class CasimirDigitalTwin:
         self.x_hat = x_hat_pred + self.K @ innovation
         self.P = (np.eye(self.state_dim) - self.K @ self.C) @ P_pred
         
-        # Adaptive noise estimation (simplified)
-        if la.norm(innovation) > 2 * np.sqrt(np.trace(S)):
-            # Increase process noise if innovation is large
-            self.Q *= 1.1
-        elif la.norm(innovation) < 0.5 * np.sqrt(np.trace(S)):
-            # Decrease process noise if innovation is small
-            self.Q *= 0.95
+        # HIGH FIX: Improved adaptive noise estimation with correlation
+        innovation_norm = la.norm(innovation)
+        expected_innovation = np.sqrt(np.trace(S))
         
-        logger.debug(f"Kalman update: innovation norm = {la.norm(innovation):.6f}")
+        # Normalized innovation squared (chi-squared test)
+        innovation_normalized = innovation.T @ la.inv(S) @ innovation
+        chi2_threshold = 7.815  # 95% confidence for 5 DOF
+        
+        if innovation_normalized > chi2_threshold:
+            # Significant model mismatch detected
+            # Increase process noise adaptively based on correlation structure
+            if hasattr(self.uq_params, 'correlation_matrix') and self.uq_params.correlation_matrix is not None:
+                # Scale noise based on correlation structure
+                noise_scaling = 1.0 + 0.1 * (innovation_normalized / chi2_threshold - 1.0)
+                # Apply correlated noise scaling
+                L = np.linalg.cholesky(self.uq_params.correlation_matrix)
+                Q_adaptive = L @ (noise_scaling * np.eye(5)) @ L.T
+                self.Q = 0.9 * self.Q + 0.1 * Q_adaptive * np.trace(self.Q) / np.trace(Q_adaptive)
+            else:
+                # Fallback to diagonal scaling
+                self.Q *= 1.1
+                
+            logger.warning(f"Model mismatch detected: χ² = {innovation_normalized:.3f}, adapting process noise")
+            
+        elif innovation_normalized < 0.5 * chi2_threshold:
+            # Model is too conservative, reduce noise
+            self.Q *= 0.98
+            
+        # Ensure minimum noise level for stability
+        min_noise = np.diag([1e-20, 1e-14, 1e-8, 1e-6, 1e-4])
+        self.Q = np.maximum(self.Q, min_noise)
+        
+        # HIGH FIX: Additional time-varying uncertainty adaptation
+        current_time = getattr(self, 'current_time', 0.0)
+        degradation_factor = 1.0 + 0.01 * (current_time / self.uq_params.tau_degradation)
+        self.Q *= degradation_factor
+        
+        logger.debug(f"Kalman update: innovation = {innovation_norm:.6f}, χ² = {innovation_normalized:.3f}")
         
         return self.x_hat.copy()
     
@@ -444,7 +548,12 @@ class CasimirDigitalTwin:
             return cost
         
         def constraint_gap_bounds(u_sequence):
-            """Probabilistic constraint on gap bounds"""
+            """
+            HIGH FIX: Non-Gaussian probabilistic constraint on gap bounds
+            
+            Uses Johnson SU distribution for skewed gap distance uncertainties
+            instead of Gaussian assumption
+            """
             u_seq = u_sequence.reshape((horizon, self.input_dim))
             x = x_current.copy()
             violations = []
@@ -456,11 +565,32 @@ class CasimirDigitalTwin:
                 d_mean = x_next[0]
                 d_std = np.sqrt(self.P[0, 0])  # From Kalman covariance
                 
-                # Probability bounds (using normal approximation)
-                prob_lower = 1 - 0.5 * (1 + np.sign(d_mean - d_min) * 
-                                      la.erf(abs(d_mean - d_min) / (d_std * np.sqrt(2))))
-                prob_upper = 0.5 * (1 + np.sign(d_max - d_mean) * 
-                                  la.erf(abs(d_max - d_mean) / (d_std * np.sqrt(2))))
+                # HIGH FIX: Johnson SU distribution parameters for skewed uncertainties
+                # Gap distance is typically right-skewed due to stiction events
+                gamma = 0.5  # Shape parameter (skewness)
+                delta = 1.2  # Shape parameter (tail behavior)
+                xi = d_mean - d_std  # Location parameter
+                lambda_param = 2 * d_std  # Scale parameter
+                
+                # Probability calculation using Johnson SU approximation
+                # P(d < x) ≈ Φ(γ + δ * sinh⁻¹((x - ξ)/λ))
+                def johnson_su_cdf(x):
+                    if lambda_param <= 0:
+                        return 0.5  # Fallback
+                    z = (x - xi) / lambda_param
+                    if abs(z) > 100:  # Prevent overflow
+                        return 1.0 if z > 0 else 0.0
+                    try:
+                        arg = gamma + delta * np.arcsinh(z)
+                        return 0.5 * (1 + np.sign(arg) * np.sqrt(1 - np.exp(-2 * arg**2)))
+                    except (OverflowError, ValueError):
+                        # Fallback to normal approximation 
+                        return 0.5 * (1 + np.sign(d_mean - x) * 
+                                    np.sqrt(1 - np.exp(-2 * ((x - d_mean) / d_std)**2)))
+                
+                # Calculate probability bounds
+                prob_lower = johnson_su_cdf(d_min)
+                prob_upper = johnson_su_cdf(d_max)
                 
                 # Require P(d_min ≤ d ≤ d_max) ≥ 0.95
                 prob_in_bounds = prob_upper - prob_lower
@@ -508,13 +638,15 @@ class CasimirDigitalTwin:
         
         return u_optimal, control_info
     
-    def calculate_multiphysics_coupling(self, x: np.ndarray, u: np.ndarray) -> np.ndarray:
+    def calculate_multiphysics_coupling(self, x: np.ndarray, u: np.ndarray) -> Tuple[np.ndarray, np.ndarray]:
         """
-        Multi-physics coupling matrix calculation
+        Multi-physics coupling matrix calculation with CRITICAL UQ enhancement
         
         [ḋ]     [α₁₁ α₁₂ α₁₃] [F_net]
-        [Ṫ]  =  [α₂₁ α₂₂ α₂₃] [Q_thermal]
+        [Ṫ]  =  [α₂₁ α₂₂ α₂₃] [Q_thermal] + uncertainty
         [θ̇]     [α₃₁ α₃₂ α₃₃] [Γ_chemical]
+        
+        CRITICAL FIX: Add uncertainty propagation through coupling matrix
         
         Parameters:
         - x: Current state vector
@@ -522,6 +654,7 @@ class CasimirDigitalTwin:
         
         Returns:
         - x_dot: State derivatives
+        - coupling_uncertainty: Uncertainty in coupling terms
         """
         # Multi-physics coupling matrix (state-dependent)
         d, d_dot, F_cas, theta, T = x
@@ -540,6 +673,46 @@ class CasimirDigitalTwin:
         alpha_32 = 0.01   # Thermal-to-angle coupling (deg/K)
         alpha_33 = 1.0    # Chemical-to-angle coupling (deg/(mol/s))
         
+        # CRITICAL FIX: Add uncertainty to coupling coefficients
+        # Coupling coefficient uncertainties (typically 10-20% for multi-physics)
+        sigma_alpha = 0.15  # 15% uncertainty in coupling coefficients
+        
+        # Base coupling uncertainty (without perturbations for deterministic testing)
+        coupling_uncertainty = np.array([
+            sigma_alpha * abs(alpha_11 * F_net),      # Uncertainty in force-velocity coupling
+            sigma_alpha * abs(alpha_22 * Q_thermal),  # Uncertainty in thermal coupling
+            sigma_alpha * abs(alpha_33 * Gamma_chem)  # Uncertainty in chemical coupling
+        ])
+        
+        # Add state-dependent amplification for realistic magnitudes
+        state_amplification = np.array([
+            np.sqrt(abs(d) * 1e-9),      # Position-dependent amplification
+            np.sqrt(abs(T - 298.0)),     # Temperature-dependent amplification  
+            np.sqrt(abs(theta - 110.0))  # Angle-dependent amplification
+        ])
+        
+        coupling_uncertainty *= (1.0 + 0.1 * state_amplification)
+        
+        # Optional: Add random perturbations for more realistic uncertainty
+        if hasattr(self.uq_params, 'correlation_matrix') and self.uq_params.correlation_matrix is not None:
+            # Use random samples for uncertainty propagation
+            np.random.seed(int(np.sum(x) * 1000) % 2**32)  # Deterministic seed based on state
+            
+            # Generate correlated perturbations for coupling coefficients
+            alpha_perturbations = np.random.multivariate_normal(
+                mean=np.zeros(9),  # 9 coupling coefficients
+                cov=(sigma_alpha * 0.1)**2 * np.eye(9)  # Smaller perturbations for stability
+            )
+            
+            # Apply small perturbations to coefficients
+            alpha_11 *= (1 + alpha_perturbations[0] * 0.1)
+            alpha_12 *= (1 + alpha_perturbations[1] * 0.1)
+            alpha_21 *= (1 + alpha_perturbations[3] * 0.1)
+            alpha_22 *= (1 + alpha_perturbations[4] * 0.1)
+            alpha_23 *= (1 + alpha_perturbations[5] * 0.1)
+            alpha_32 *= (1 + alpha_perturbations[7] * 0.1)
+            alpha_33 *= (1 + alpha_perturbations[8] * 0.1)
+        
         # Coupling matrix
         Alpha = np.array([
             [alpha_11, alpha_12, alpha_13],
@@ -550,6 +723,10 @@ class CasimirDigitalTwin:
         # Apply coupling
         coupled_derivatives = Alpha @ u
         
+        # CRITICAL FIX: Calculate coupling uncertainty
+        # Uncertainty propagation: σ_y² = Σᵢⱼ (∂y/∂αᵢⱼ)² σ²_αᵢⱼ + 2Σᵢⱼₖₗ (∂y/∂αᵢⱼ)(∂y/∂αₖₗ)σ_αᵢⱼ,αₖₗ
+        # Use the pre-calculated coupling_uncertainty from above
+        
         # Full state derivative (including uncoupled states)
         x_dot = np.array([
             d_dot,                    # ḋ = velocity
@@ -559,7 +736,18 @@ class CasimirDigitalTwin:
             coupled_derivatives[1]    # Ṫ from coupling
         ])
         
-        return x_dot
+        # Full uncertainty vector (add zeros for uncoupled states)
+        full_coupling_uncertainty = np.array([
+            0,                        # No uncertainty in velocity definition
+            coupling_uncertainty[0],  # Uncertainty in acceleration
+            0.01 * abs(F_cas),       # 1% uncertainty in Casimir force evolution
+            coupling_uncertainty[2],  # Uncertainty in contact angle rate
+            coupling_uncertainty[1]   # Uncertainty in temperature rate
+        ])
+        
+        logger.debug(f"Coupling uncertainty: {np.linalg.norm(full_coupling_uncertainty):.6e}")
+        
+        return x_dot, full_coupling_uncertainty
     
     def sensitivity_analysis(self, x: np.ndarray, material_params: Dict) -> Dict:
         """
@@ -630,45 +818,96 @@ class CasimirDigitalTwin:
         return sensitivities
     
     def robust_performance_index(self, x_trajectory: np.ndarray, x_target: np.ndarray,
-                               uncertainty_set: Dict) -> float:
+                               uncertainty_set: Dict, material_params: Dict) -> float:
         """
-        Robust performance index calculation
+        Robust performance index calculation with CRITICAL fixes
         
         J_robust = E[‖x - x_target‖²] + λ max_{Δ∈Δ_U} ‖x(Δ) - x_nominal‖²
+        
+        CRITICAL FIX: Added material_params parameter to resolve undefined variable
+        HIGH FIX: Added Monte Carlo sampling for better uncertainty characterization
         
         Parameters:
         - x_trajectory: State trajectory
         - x_target: Target trajectory
         - uncertainty_set: Uncertainty bounds
+        - material_params: Material parameters (CRITICAL FIX)
         
         Returns:
         - performance_index: Robust performance metric
         """
         lambda_robust = 0.1  # Robustness weight
+        n_monte_carlo = 1000  # HIGH FIX: Monte Carlo samples
         
         # Nominal performance (expectation approximated by mean)
         x_error = x_trajectory - x_target
         nominal_cost = np.mean(np.sum(x_error**2, axis=1))
         
-        # Worst-case performance over uncertainty set
+        # HIGH FIX: Monte Carlo evaluation of worst-case performance
         max_deviation = 0
         
-        for param, bounds in uncertainty_set.items():
-            lower_bound, upper_bound = bounds
+        # Generate correlated parameter samples using correlation matrix
+        param_names = list(uncertainty_set.keys())
+        n_params = len(param_names)
+        
+        if n_params > 0:
+            # Extract parameter uncertainties
+            param_stds = np.array([
+                (bounds[1] - bounds[0]) / 6.0  # 3-sigma bounds to std
+                for bounds in uncertainty_set.values()
+            ])
             
-            # Evaluate at uncertainty bounds
-            for bound_value in [lower_bound, upper_bound]:
-                # Simulate trajectory with perturbed parameter (simplified)
-                perturbation_factor = bound_value / material_params.get(param, 1.0)
-                x_perturbed = x_trajectory * perturbation_factor  # Simplified perturbation
+            # Generate correlated samples
+            # Use subset of correlation matrix for available parameters
+            correlation_subset = np.eye(n_params)  # Default to independent
+            if hasattr(self.uq_params, 'correlation_matrix') and self.uq_params.correlation_matrix is not None:
+                # Map parameter names to correlation matrix indices
+                param_indices = []
+                param_map = {'epsilon_prime': 0, 'mu_prime': 1, 'distance': 2, 'temperature': 3, 'frequency': 4}
+                for name in param_names:
+                    if name in param_map:
+                        param_indices.append(param_map[name])
                 
-                deviation = np.max(np.sum((x_perturbed - x_trajectory)**2, axis=1))
-                max_deviation = max(max_deviation, deviation)
+                if param_indices:
+                    correlation_subset = self.uq_params.correlation_matrix[np.ix_(param_indices, param_indices)]
+            
+            # Cholesky decomposition for correlated sampling
+            try:
+                L = np.linalg.cholesky(correlation_subset)
+                
+                for _ in range(n_monte_carlo):
+                    # Generate correlated parameter perturbations
+                    z = np.random.randn(n_params)
+                    param_perturbations = L @ z * param_stds
+                    
+                    # Apply perturbations to trajectory (simplified model)
+                    perturbation_magnitude = np.linalg.norm(param_perturbations)
+                    x_perturbed = x_trajectory * (1 + 0.1 * perturbation_magnitude)
+                    
+                    deviation = np.max(np.sum((x_perturbed - x_trajectory)**2, axis=1))
+                    max_deviation = max(max_deviation, deviation)
+                    
+            except np.linalg.LinAlgError:
+                logger.warning("Correlation matrix not positive definite, using independent sampling")
+                # Fallback to independent sampling
+                for param, bounds in uncertainty_set.items():
+                    lower_bound, upper_bound = bounds
+                    
+                    # Monte Carlo over parameter range
+                    param_samples = np.random.uniform(lower_bound, upper_bound, n_monte_carlo)
+                    
+                    for param_value in param_samples:
+                        # CRITICAL FIX: Use material_params parameter
+                        perturbation_factor = param_value / material_params.get(param, 1.0)
+                        x_perturbed = x_trajectory * perturbation_factor
+                        
+                        deviation = np.max(np.sum((x_perturbed - x_trajectory)**2, axis=1))
+                        max_deviation = max(max_deviation, deviation)
         
         # Robust performance index
         J_robust = nominal_cost + lambda_robust * max_deviation
         
-        logger.info(f"Robust performance index: J = {J_robust:.6e}")
+        logger.info(f"Robust performance index: J = {J_robust:.6e} (MC samples: {n_monte_carlo})")
         
         return J_robust
     
@@ -779,21 +1018,97 @@ class CasimirDigitalTwin:
         
         return validation
     
-    def run_digital_twin_cycle(self, measurements: np.ndarray, material_params: Dict) -> Dict:
+    def validate_uq_integrity(self) -> Dict:
         """
-        Complete digital twin cycle: estimation, control, adaptation
+        Validate UQ system integrity and detect potential issues
+        
+        Returns comprehensive UQ health assessment
+        """
+        validation_results = {
+            'correlation_matrix_valid': False,
+            'uncertainty_bounds_reasonable': False,
+            'filter_stability': False,
+            'parameter_identifiability': False,
+            'overall_uq_health': 'CRITICAL'
+        }
+        
+        # Check correlation matrix
+        if hasattr(self.uq_params, 'correlation_matrix') and self.uq_params.correlation_matrix is not None:
+            eigenvals = np.linalg.eigvals(self.uq_params.correlation_matrix)
+            validation_results['correlation_matrix_valid'] = np.all(eigenvals > 1e-10)
+        
+        # Check uncertainty bounds
+        reasonable_bounds = (
+            0.001 <= self.uq_params.epsilon_uq <= 0.5 and
+            0.001 <= self.uq_params.delta_material <= 0.5 and
+            self.uq_params.sigma_distance > 0
+        )
+        validation_results['uncertainty_bounds_reasonable'] = reasonable_bounds
+        
+        # Check filter stability (condition number of covariance)
+        cond_P = np.linalg.cond(self.P)
+        validation_results['filter_stability'] = cond_P < 1e12
+        
+        # Check parameter identifiability (observability)
+        obs_matrix = np.vstack([self.C @ np.linalg.matrix_power(self.A, i) for i in range(self.state_dim)])
+        validation_results['parameter_identifiability'] = np.linalg.matrix_rank(obs_matrix) == self.state_dim
+        
+        # Overall health assessment - convert boolean values to integers for summation
+        health_score = sum(1 for val in validation_results.values() if isinstance(val, bool) and val)
+        if health_score >= 4:
+            validation_results['overall_uq_health'] = 'HEALTHY'
+        elif health_score >= 2:
+            validation_results['overall_uq_health'] = 'DEGRADED'
+        else:
+            validation_results['overall_uq_health'] = 'CRITICAL'
+            
+        logger.info(f"UQ System Health: {validation_results['overall_uq_health']}")
+        
+        return validation_results
+    
+    def update_time_varying_uncertainties(self, delta_t: float):
+        """
+        Update time-varying uncertainty parameters
+        
+        HIGH FIX: Address time-varying uncertainty evolution
+        """
+        self.current_time += delta_t
+        
+        # Update thermal drift uncertainty
+        thermal_evolution = 1.0 + 0.1 * np.sin(2 * np.pi * self.current_time / 86400)  # Daily variation
+        self.uq_params.sigma_thermal_drift *= thermal_evolution
+        
+        # Update material degradation
+        degradation_factor = np.exp(self.current_time / self.uq_params.tau_degradation)
+        self.uq_params.delta_material *= (1.0 + 0.01 * (degradation_factor - 1.0))
+        
+        # Bound the uncertainties to prevent runaway growth
+        self.uq_params.delta_material = min(self.uq_params.delta_material, 0.5)
+        self.uq_params.sigma_thermal_drift = min(self.uq_params.sigma_thermal_drift, 1e-3)
+    
+    def run_digital_twin_cycle(self, measurements: np.ndarray, material_params: Dict, 
+                             delta_t: float = 1e-6) -> Dict:
+        """
+        Complete digital twin cycle with CRITICAL and HIGH UQ fixes
         
         Parameters:
         - measurements: Current sensor measurements
         - material_params: Material parameters
+        - delta_t: Time step for uncertainty evolution
         
         Returns:
-        - cycle_results: Complete cycle results and metrics
+        - cycle_results: Complete cycle results with enhanced UQ metrics
         """
-        # 1. State estimation with Kalman filter
+        # Update time-varying uncertainties
+        self.update_time_varying_uncertainties(delta_t)
+        
+        # Validate UQ system health
+        uq_health = self.validate_uq_integrity()
+        
+        # 1. State estimation with enhanced Kalman filter
         x_estimated = self.adaptive_kalman_update(measurements)
         
-        # 2. Calculate UQ-enhanced forces
+        # 2. Calculate UQ-enhanced forces with correlation
         F_total, F_uncertainty = self.calculate_uq_enhanced_force(x_estimated, material_params)
         
         # 3. Fidelity assessment
@@ -803,11 +1118,30 @@ class CasimirDigitalTwin:
         # 4. Sensitivity analysis
         sensitivities = self.sensitivity_analysis(x_estimated, material_params)
         
-        # 5. Predictive control (if in control mode)
+        # 5. Multi-physics coupling with uncertainty
+        u_test = np.array([F_total * 1e-9, 0.0, 0.0])  # Test input
+        x_dot, coupling_uncertainty = self.calculate_multiphysics_coupling(x_estimated, u_test)
+        
+        # 6. Predictive control (if in control mode)
         x_reference = np.array([5.0, 0.0, F_total, 110.0, 298.0])  # Target: 5nm gap
         u_optimal, control_info = self.predictive_control_with_uq(x_estimated, x_reference)
         
-        # 6. Performance validation
+        # 7. Robust performance assessment
+        uncertainty_set = {
+            'epsilon_prime': (material_params.get('epsilon_prime', -2.5) * 0.9, 
+                            material_params.get('epsilon_prime', -2.5) * 1.1),
+            'mu_prime': (material_params.get('mu_prime', -1.8) * 0.9, 
+                        material_params.get('mu_prime', -1.8) * 1.1)
+        }
+        
+        # Generate test trajectory for robust analysis
+        x_trajectory = np.array([x_estimated, x_reference]).T
+        robust_performance = self.robust_performance_index(
+            x_trajectory, np.array([x_reference, x_reference]).T, 
+            uncertainty_set, material_params
+        )
+        
+        # 8. Performance validation
         current_metrics = DigitalTwinMetrics(
             fidelity_score=fidelity,
             sensor_precision=self.uq_params.sigma_distance,
@@ -818,7 +1152,7 @@ class CasimirDigitalTwin:
         
         validation = self.validate_performance_targets(current_metrics)
         
-        # Compile results
+        # Compile enhanced results
         cycle_results = {
             'timestamp': np.datetime64('now'),
             'state_estimate': x_estimated.tolist(),
@@ -826,12 +1160,26 @@ class CasimirDigitalTwin:
             'force_uncertainty': F_uncertainty,
             'fidelity_score': fidelity,
             'sensitivities': sensitivities,
+            'coupling_uncertainty': coupling_uncertainty.tolist(),
             'control_sequence': u_optimal[0].tolist(),  # Next control action
+            'robust_performance': robust_performance,
             'performance_validation': validation,
-            'digital_twin_state': self.current_state.value
+            'uq_health_assessment': uq_health,
+            'digital_twin_state': self.current_state.value,
+            'current_time': self.current_time,
+            'correlation_info': {
+                'rho_epsilon_mu': self.uq_params.rho_epsilon_mu,
+                'time_varying_uncertainty': True
+            }
         }
         
-        logger.info(f"Digital twin cycle complete: fidelity = {fidelity:.4f}")
+        # Health-based logging
+        if uq_health['overall_uq_health'] == 'CRITICAL':
+            logger.error(f"CRITICAL UQ issues detected: {uq_health}")
+        elif uq_health['overall_uq_health'] == 'DEGRADED':
+            logger.warning(f"UQ performance degraded: {uq_health}")
+        else:
+            logger.info(f"Digital twin cycle complete: fidelity = {fidelity:.4f}, UQ health = HEALTHY")
         
         return cycle_results
 
