@@ -1,5 +1,14 @@
 # Casimir Anti-Stiction Metasurface Coatings
 
+## Related Repositories
+
+- [energy](https://github.com/arcticoder/energy): Central research hub for all energy, quantum, and Casimir-related technologies. This anti-stiction platform is validated and manufactured using methods from the energy framework.
+- [casimir-ultra-smooth-fabrication-platform](https://github.com/arcticoder/casimir-ultra-smooth-fabrication-platform): Provides the ultra-smooth nanofabrication and quality control for these coatings, with direct digital twin integration.
+- [casimir-nanopositioning-platform](https://github.com/arcticoder/casimir-nanopositioning-platform): Enables sub-nanometer positioning and force control for fabrication and testing of anti-stiction surfaces.
+- [negative-energy-generator](https://github.com/arcticoder/negative-energy-generator): Supplies anti-stiction coating protocols and advanced Casimir force engineering, co-developed with this project.
+
+All repositories are part of the [arcticoder](https://github.com/arcticoder) ecosystem and link back to the energy framework for unified documentation and system-level integration.
+
 ## Overview
 
 Revolutionary anti-stiction metasurface coating platform leveraging repulsive Casimir-Lifshitz forces to prevent stiction in precision NEMS/MEMS devices. This repository implements **quantum-engineered surface coatings** that achieve 98%+ stiction reduction through metamaterial-enhanced repulsive forces and advanced digital twin control.
