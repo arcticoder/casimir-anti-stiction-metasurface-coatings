@@ -1,3 +1,8 @@
+## Overview
+
+This repository describes research-stage implementations and prototype analyses exploring metasurface coatings that leverage Casimir-Lifshitz interactions to reduce stiction in precision NEMS/MEMS devices. Performance figures shown in this README originate from simulation studies, prototype experiments, and digital-twin runs under specific configurations; they are not guarantees of production performance.
+
+---
 # Casimir Anti-Stiction Metasurface Coatings
 
 ## Related Repositories
@@ -11,14 +16,32 @@ All repositories are part of the [arcticoder](https://github.com/arcticoder) eco
 
 ## Overview
 
-Revolutionary anti-stiction metasurface coating platform leveraging repulsive Casimir-Lifshitz forces to prevent stiction in precision NEMS/MEMS devices. This repository implements **quantum-engineered surface coatings** that achieve 98%+ stiction reduction through metamaterial-enhanced repulsive forces and advanced digital twin control.
+This repository describes research-stage implementations and prototype analyses exploring metasurface coatings that leverage Casimir-Lifshitz interactions to reduce stiction in precision NEMS/MEMS devices. Performance figures shown in this README originate from simulation studies, prototype experiments, and digital-twin runs under specific configurations; they are not guarantees of production performance.
 
-**Development Status**: 🟢 **PRODUCTION READY**  
-**UQ Foundation**: ✅ **100% VALIDATED** (All critical and high severity issues resolved)  
-**Mathematical Foundation**: ✅ **COMPREHENSIVE** (Metamaterial Casimir theory with correlation modeling)  
-**Digital Twin**: ✅ **OPERATIONAL** (Real-time force prediction with correlated uncertainty quantification)
+- Reported numbers (stiction reduction, enhancement factors, timing, etc.) depend strongly on fabrication parameters, materials, environmental conditions, and measurement methods. Reproduction instructions, raw outputs, and uncertainty-quantification (UQ) notes are available in `docs/benchmarks.md` and `docs/UQ-notes.md` when present.
+- This codebase is intended as a research and prototyping resource. Do not treat the repository as a validated production specification. Any operational use requires independent verification, peer review, formal V&V, and compliance checks.
 
 ---
+### Primary Repository Dependencies (reported / integration notes)
+
+1. `warp-bubble-optimizer` — metamaterial enhancement mathematics (UQ and integration work reported; see `docs/` for supporting artifacts)
+2. `casimir-nanopositioning-platform` — precision force control and ultra-smooth fabrication (prototype integrations documented)
+3. `lqg-anec-framework` — material property specification references
+4. `negative-energy-generator` — protocols referenced for coating workflows (experimental stage)
+5. `warp-bubble-qft` — supporting metamaterial Casimir documentation
+6. `unified-lqg` and `unified-lqg-qft` — material and frequency modeling support
+
+### Reported Validation Notes
+
+- Reported metrics such as energy or enhancement factors come from simulation or prototype test reports; consult the `docs/` directory (e.g., `docs/ENERGY_VALIDATION.md`, `docs/UQ-notes.md`) for provenance, methods, and limitations.
+- Where UQ work is claimed in repository text, treat those claims as work-in-progress unless explicit validation artifacts (datasets, scripts, CI results) are linked.
+### Scope, Validation & Limitations
+
+- Scope: Prototype designs and simulation studies for metasurface anti-stiction coatings. Not a production specification.
+- Validation: Select simulation and prototype results are summarized here; full reproduction instructions and raw data (where available) are in `docs/benchmarks.md` and `docs/UQ-notes.md`.
+- Limitations: Reported performance is conditional on high-precision fabrication and controlled test environments. Manufacturing yield, environmental sensitivity, long-term stability, and integration risks remain areas for further study.
+
+If you maintain or extend this repository, please add direct links to any raw data, benchmark scripts, and UQ analyses used to support claims.
 
 ## 🎯 Performance Specifications
 
