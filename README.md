@@ -43,21 +43,19 @@ This repository describes research-stage implementations and prototype analyses 
 
 If you maintain or extend this repository, please add direct links to any raw data, benchmark scripts, and UQ analyses used to support claims.
 
-## 🎯 Performance Specifications
+## 🎯 Performance Specifications (reported examples; research-stage)
 
-### **Anti-Stiction Performance**
-- **Stiction Reduction**: 98.2% ± 1.1% elimination of adhesive forces
-- **Casimir Force Enhancement**: 1.2×10¹⁰× improvement over conventional surfaces
-- **Contact Angle Control**: 142° ± 5° (highly hydrophobic)
-- **Work of Adhesion**: <10 mJ/m² (repulsive surface energy)
-- **Operational Range**: 1-100 nm gap maintenance with precision control
+### Anti-Stiction Performance (examples)
+- **Stiction Reduction**: Example reports cite reductions around 98% (simulations and limited prototypes). See `docs/benchmarks.md` for experiment context, raw data, and uncertainty treatment.
+- **Casimir Force Enhancement**: Some modeling results show large enhancement factors (orders-of-magnitude increases in modeled force under specific metamaterial parameters). These are sensitive to material models and boundary conditions — consult `papers/metamaterial_casimir.tex` and UQ notes before interpreting absolute magnitudes.
+- **Contact Angle Control**: Contact angles reported in prototypes are typically in the 130°–145° range depending on surface treatment; values depend on measurement method and environment.
+- **Work of Adhesion**: Reported example values are below 10 mJ/m² in select experiments; treat as conditional on SAM composition and surface preparation.
+- **Operational Range**: Designed for experiments in the ~1–100 nm gap regime; maintaining gaps at the low end requires controlled environments and independent verification.
 
-### **Digital Twin Precision**
-- **Force Measurement**: 0.06 pm/√Hz precision with correlated uncertainty propagation
-- **Thermal Uncertainty**: 5 nm stability with time-varying evolution
-- **Force Prediction**: 0.7% ± 0.2% uncertainty relative to measured values
-- **State Synchronization**: 8.2 µs ± 1.5 µs digital-physical sync latency
-- **Coverage Probability**: 95.4% ± 1.8% (statistically validated)
+### Digital Twin & Measurement Precision (examples)
+- **Force Measurement**: Reported instrumentation precisions (example: sub-pm level in controlled setups) should be interpreted in the context of the reported measurement setup and calibration procedures.
+- **Thermal Stability & Uncertainty**: Thermal drift and environmental variability are important contributors to uncertainty; reproduction details and time-series data are provided under `docs/` when available.
+- **Force Prediction & Coverage**: Model prediction accuracy is reported in limited test cases; full uncertainty propagation (sensitivity analysis, CI-like bounds) is documented in `docs/UQ-notes.md` where available.
 
 ---
 
@@ -142,7 +140,7 @@ Where:
 
 ## 🔬 Technology Integration
 
-### **Primary Repository Dependencies** ✅ READY
+### **Primary Repository Dependencies** (integration notes)
 
 1. **`warp-bubble-optimizer`** - Metamaterial enhancement mathematics (100% UQ complete)
 2. **`casimir-nanopositioning-platform`** - Precision force control and ultra-smooth fabrication
@@ -152,58 +150,43 @@ Where:
 6. **`unified-lqg`** - Drude model material properties and frequency optimization
 7. **`unified-lqg-qft`** - Metamaterial implementation and validation
 
-### **Validated Foundation**
-- ✅ **484× Energy Enhancement**: Provides manufacturing capability
-- ✅ **1.10× Energy Balance**: Stable cross-system coupling
-- ✅ **<5% Parameter Consistency**: Unified framework (μ=0.15±0.05)
-- ✅ **Material Database**: 10 combinations with <4.1% uncertainty
+### **Foundation & integration status (summary)
+- Reported integration results and UQ artifacts are summarized in `docs/`. Claims about high-confidence validation should be read alongside the corresponding raw artifacts. Independent verification, peer review, and formal V&V are required before operational deployment.
 
 ---
 
 ## 🛠️ Anti-Stiction Technologies
 
-### **1. Self-Assembled Monolayers (SAMs)**
+### 1. Self-Assembled Monolayers (SAMs)
 
-**Implementation Path** (from `negative-energy-generator`):
-- Anti-stiction coatings with adhesion layers (Ti/Cr)
-- Molecular-scale surface functionalization
-- Controlled work of adhesion (≤10 mJ/m²)
+**Implementation Path (examples)**
+- Anti-stiction coatings using adhesion layers (e.g., Ti/Cr) and SAM chemistry. Reported work-of-adhesion targets are conditional on surface chemistry and processing; see `docs/benchmarks.md` for specific recipes and reproducibility notes.
 
-### **2. Metamaterial Spacer Arrays**
+### 2. Metamaterial Spacer Arrays
 
-**Design Strategy**:
-- Hyperbolic metamaterial implementation
-- ε < 0, μ < 0 electromagnetic response
-- 100×-500× enhancement factors
-- Nanoscale fabrication using validated ultra-smooth platform
+**Design Strategy (notes)**:
+- Hyperbolic metamaterials and related designs are explored for enhancement of Casimir-type interactions. Reported enhancement ranges in literature and simulations vary widely; model assumptions and material loss terms strongly affect outcomes. See `papers/metamaterial_casimir.tex` and accompanying UQ notes.
 
-### **3. Repulsive Force Engineering**
+### 3. Repulsive Force Engineering
 
-**Physical Mechanism**:
-- Negative reflection coefficients → repulsive forces
-- Frequency-dependent optimization
-- Gap-dependent force modulation
-- Real-time stiction prevention
+**Physical Mechanism (summary)**:
+- Under specific metamaterial and boundary conditions, Casimir-Lifshitz interactions can be engineered to produce reduced attractive forces or repulsive contributions in modeled systems. Practical demonstration depends on material synthesis, losses, and precise geometry. Claims of real-time stiction prevention are experimental goals and require end-to-end validation.
 
 ---
 
-## 📊 Performance Targets
+## 📊 Performance Targets (interpretation guidance)
 
-### **Anti-Stiction Specifications**
-| Parameter | Target | Method | Status |
-|-----------|--------|--------|--------|
-| **Static Pull-in Gap** | ≥5 nm | Metamaterial enhancement | 🎯 Validated |
-| **Work of Adhesion** | ≤10 mJ/m² | SAM surface engineering | 🎯 Ready |
-| **Repulsive Force** | >1 nN at 5nm | Hyperbolic metamaterials | 🎯 Calculated |
-| **Surface Quality** | ≤0.2 nm RMS | Ultra-smooth platform | ✅ Achieved |
-| **Manufacturing Yield** | >90% | Validated fabrication | ✅ Ready |
+### Anti-Stiction Specifications (interpret carefully)
+| Parameter | Example target or reported value | Notes |
+|-----------|----------------------------------:|-------|
+| Static pull-in gap | ≥5 nm (design target in some studies) | Achieving low-nm thresholds depends on experimental conditions and independent V&V.
+| Work of adhesion | ≤10 mJ/m² (reported in select tests) | Dependent on SAM formulation and surface prep; check raw artifacts.
+| Repulsive force | >1 nN at 5 nm (model example) | Example-model results; sensitive to material loss and geometry.
+| Surface quality | ≤0.2 nm RMS (fabrication target) | Achievable in specialized facilities; yield and reproducibility vary by process.
+| Manufacturing yield | >90% (aspirational) | Reported yields should be confirmed with larger-scale tests and QA data.
 
-### **Technology Readiness**
-- **Mathematical Foundation**: ✅ Complete metamaterial theory
-- **Manufacturing Platform**: ✅ Ultra-smooth fabrication validated  
-- **Material Database**: ✅ 10 materials with <4.1% uncertainty
-- **UQ Framework**: ✅ 100% critical issues resolved
-- **Integration Ready**: ✅ All dependencies validated
+### Technology Readiness (summary)
+- Mathematical models and fabrication approaches are documented in `papers/` and `docs/` but are research-stage and require further independent validation. Status indicators in this README are not a substitute for formal V&V, peer review, or regulatory/compliance checks required for operational use.
 
 ---
 
@@ -302,11 +285,8 @@ casimir-anti-stiction-metasurface-coatings/
 - **Integrated Platform**: Seamless ultra-smooth fabrication integration
 - **Comprehensive Theory**: Complete metamaterial Casimir mathematics
 
-### **Practical Impact**
-- **Stiction-Free Operation**: Enables new MEMS/NEMS architectures
-- **Precision Manufacturing**: Sub-nanometer surface engineering
-- **Commercial Readiness**: Validated fabrication and quality control
-- **Scalable Technology**: Industrial deployment capability
+### Practical Impact (cautious framing)
+- Potential to reduce stiction in precision devices is an active research goal; significant engineering work remains to transition prototypes to robust fielded products. Maintain cautious external messaging and link to reproducibility artifacts when reporting performance.
 
 ---
 
@@ -316,7 +296,7 @@ This project is released under the [Unlicense](LICENSE) - public domain software
 
 ---
 
-*Revolutionary anti-stiction metasurface coatings enabling stiction-free operation of precision devices through quantum-engineered repulsive Casimir-Lifshitz forces and advanced metamaterial surface engineering.*
+*This repository documents research and prototype work on metasurface coatings and engineered Casimir-Lifshitz interactions. Results are preliminary, and claimed performance metrics are conditional on experimental setup, material quality, and model assumptions. See `docs/` for reproducibility materials and UQ analyses.*
 
 ---
 
