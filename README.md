@@ -68,34 +68,29 @@ If you maintain or extend this repository, please add direct links to any raw da
 ```latex
 F = -\frac{\hbar c}{2\pi^2 d^3} \int_0^\infty \frac{\xi^2 d\xi}{1 - r_{TE}r_{TM}e^{-2\xi}}
 ```
-
+ This repository documents research-stage implementations and prototype analyses exploring metasurface coatings that leverage Casimir-Lifshitz interactions to reduce stiction in precision NEMS/MEMS devices. Performance figures in this README come from simulation studies, prototype experiments, and digital-twin runs under specific configurations; they are not guarantees of production performance and should be treated as provisional until independently reproduced.
 **Reflection Coefficients for Metamaterials**:
-```latex
 r_{TE} = \frac{\sqrt{\epsilon + \xi^2} - \sqrt{\epsilon'\mu' + \xi^2}}{\sqrt{\epsilon + \xi^2} + \sqrt{\epsilon'\mu' + \xi^2}}
 ```
 ```latex
 r_{TM} = \frac{\epsilon'\sqrt{\epsilon + \xi^2} - \epsilon\sqrt{\epsilon'\mu' + \xi^2}}{\epsilon'\sqrt{\epsilon + \xi^2} + \epsilon\sqrt{\epsilon'\mu' + \xi^2}}
-```
-
-**Key Insight**: Metamaterials with **ε < 0, μ < 0** create **negative reflection coefficients**, enabling **repulsive forces**.
-
 ### **Metamaterial Enhancement Factor Mathematics**
 
 **Source**: [`papers/metamaterial_casimir.tex`](papers/metamaterial_casimir.tex) (Lines 21-35)
-
+ [energy](https://github.com/arcticoder/energy): Central research hub for energy, quantum, and Casimir-related technologies. This repository references methods and artifacts in `energy/` for reproducibility; validation and manufacturing claims should be confirmed with linked provenance artifacts.
 ```latex
-A_{meta} = \left|\frac{(\epsilon'+i\epsilon'')(\mu'+i\mu'')-1}{(\epsilon'+i\epsilon'')(\mu'+i\mu'')+1}\right|^2
+ Reported numbers (stiction reduction, enhancement factors, timing, etc.) depend strongly on fabrication parameters, materials, environmental conditions, and measurement methods. Reproduction instructions, raw outputs, and uncertainty-quantification (UQ) notes are available in `docs/benchmarks.md` and `docs/UQ-notes.md` when present; absent artifacts should be treated as gaps and prioritized for documentation.
 ```
-
+ **Stiction Reduction (reported)**: Example reports cite reductions around 98% in select simulation cases and limited prototype runs. See `docs/benchmarks.md` for experiment context, raw data, and uncertainty treatment; independent reproduction is recommended.
 **Enhancement Categories**:
-- **Dielectric metamaterials**: $A_{meta} = 1.5-3\times$
+ **Casimir Force Enhancement (reported)**: Some modeling results show large enhancement factors in modeled scenarios. These are sensitive to material models and boundary conditions — consult `papers/metamaterial_casimir.tex` and UQ notes before interpreting absolute magnitudes.
 - **Plasmonic metamaterials**: $A_{meta} = 10-50\times$ 
-- **Hyperbolic metamaterials**: $A_{meta} = 100-500\times$ ⭐ **OPTIMAL**
+ **Total Repositories**: 49 repositories referenced for research and prototype integration across the workspace. Integration depth varies by repository and should be reviewed per-repo for reproducibility artifacts and validation status; avoid using this count as evidence of production readiness.
 - **Active metamaterials**: $A_{meta} > 1000\times$ 🚀 **BREAKTHROUGH**
 
 ### **Anti-Stiction Coating Mathematical Specifications**
 
-**Surface Quality Requirements**:
+ **`warp-bubble-optimizer`** - Metamaterial enhancement mathematics (UQ and integration work documented; follow linked `docs/` for scope)
 ```latex
 \text{Surface roughness} < 0.2 \text{ nm RMS}
 ```
