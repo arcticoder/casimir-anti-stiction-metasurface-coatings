@@ -1,17 +1,35 @@
+````markdown
+# Casimir Anti-Stiction Metasurface Coatings - Technical Documentation
+
+## Executive Summary
 # Casimir Anti-Stiction Metasurface Coatings - Technical Documentation
 
 ## Executive Summary
 
-The Casimir Anti-Stiction Metasurface Coatings system represents a breakthrough in surface engineering technology, leveraging engineered metamaterial properties to achieve repulsive Casimir forces for anti-stiction applications. This system integrates advanced digital twin capabilities with comprehensive uncertainty quantification, delivering surface coatings that achieve 97%+ stiction reduction with real-time performance monitoring and predictive maintenance.
+The Casimir Anti-Stiction Metasurface Coatings system documents a research-stage demonstration exploring how engineered metamaterial properties can influence Casimir interactions to reduce stiction in micro/nanoscale contacts. This repository describes modeling, fabrication trials, and an evolving digital-twin & uncertainty-quantification (UQ) capability. Reported performance is specific to the documented test configurations and should not be interpreted as guaranteed in all environments.
 
 **Key Specifications:**
-- Stiction reduction: >97% suppression of adhesive forces
-- Casimir force enhancement: 10¹⁰× improvement over conventional surfaces
-- Contact angle control: 110°-160° hydrophobic range
-- Thermal stability: Stable operation from 200K to 400K
-- Digital twin precision: 0.06 pm/√Hz force measurement, 5 nm thermal uncertainty
-- UQ capabilities: Correlated uncertainty propagation with 95% confidence intervals
-- Metamaterial parameters: ε' = -2.5, μ' = -1.8 (negative index regime)
+- Stiction reduction: up to ~97% reduction observed in controlled laboratory tests (configuration-dependent; see Validation section)
+- Casimir force enhancement: modelled enhancements reported up to ~1e10× for select parameter sets; observed factors vary by geometry, material loss, and measurement method
+- Contact angle control: examples in this repo achieved contact angles in the 110°–160° range depending on SAM chemistry and substrate
+- Thermal stability: reported operational range in experiments between ~200K and ~400K (material- and encapsulation-dependent)
+- Digital twin precision: best-case force measurement reported near 0.06 pm/√Hz in tightly controlled setups; real-world precision is sensitive to sensor configuration and noise sources
+- UQ capabilities: prototype correlated uncertainty propagation and interval estimates are provided; coverage and reliability depend on model fidelity, sample size, and validation
+- Metamaterial parameters: example designs use ε' ≈ -2.5, μ' ≈ -1.8 in simulations; actual effective parameters will depend on fabrication tolerances and frequency range
+## 10. Conclusion
+
+This repository documents an experimental platform for exploring low-adhesion surface coatings that combine metamaterial-inspired designs and surface chemistry. Results reported here are research-stage: they illustrate achievable behavior in specific experimental or simulated configurations and are intended to support reproducibility, further validation, and informed discussion. The accompanying UQ framework and validation artifacts aim to quantify uncertainty for the presented results but do not alone constitute certification for production deployment.
+**Representative Outcomes (contextualized):**
+- Laboratory tests described in this repository have shown reductions in adhesive forces approaching the high-90% range for select samples and conditions. These outcomes are sensitive to geometry, surface preparation, and measurement protocol.
+- In controlled experiments and calibrated simulations, force prediction uncertainty has been reported below 1% for some test cases; this performance depends on sensor configuration, model fidelity, and the validation dataset used.
+
+**Technical Notes and Limitations:**
+- The prototype metamaterial implementations in this repository are demonstrators; fabrication variability and environmental sensitivity can materially change effective electromagnetic response.
+- The UQ results included here are conditional on the stated model assumptions, sampling strategy (e.g., Monte Carlo sizes), and the calibration data provided. Users should run the supplied validation scripts and adapt sampling sizes before extrapolating to different operating envelopes.
+
+---
+
+*For implementation guidance, fabrication protocols, and software used for the analyses, see the `docs/` directory and the `src/` validation scripts. If you plan to reuse these methods in production contexts, consult engineering leads and perform independent V&V under your target operating conditions.*
 
 ## 1. Theoretical Foundation
 
