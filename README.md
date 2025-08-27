@@ -86,7 +86,7 @@ r_{TM} = \frac{\epsilon'\sqrt{\epsilon + \xi^2} - \epsilon\sqrt{\epsilon'\mu' + 
  **Casimir Force Enhancement (reported)**: Some modeling results show large enhancement factors in modeled scenarios. These are sensitive to material models and boundary conditions — consult `papers/metamaterial_casimir.tex` and UQ notes before interpreting absolute magnitudes.
 - **Plasmonic metamaterials**: $A_{meta} = 10-50\times$ 
  **Total Repositories**: 49 repositories referenced for research and prototype integration across the workspace. Integration depth varies by repository and should be reviewed per-repo for reproducibility artifacts and validation status; avoid using this count as evidence of production readiness.
-- **Active metamaterials**: $A_{meta} > 1000\times$ 🚀 **BREAKTHROUGH**
+- **Active metamaterials**: $A_{meta} > 1000\times$ (reported in specific modeled cases; interpret as research-stage results) 🚀 **BREAKTHROUGH**
 
 ### **Anti-Stiction Coating Mathematical Specifications**
 
@@ -137,7 +137,7 @@ Where:
 
 ### **Primary Repository Dependencies** (integration notes)
 
-1. **`warp-bubble-optimizer`** - Metamaterial enhancement mathematics (100% UQ complete)
+1. **`warp-bubble-optimizer`** - Metamaterial enhancement mathematics (UQ analyses in progress; review per-artifact)
 2. **`casimir-nanopositioning-platform`** - Precision force control and ultra-smooth fabrication
 3. **`lqg-anec-framework`** - Advanced material property specifications  
 4. **`negative-energy-generator`** - Anti-stiction coating protocols
@@ -274,11 +274,11 @@ casimir-anti-stiction-metasurface-coatings/
 
 ## 🏆 Competitive Advantages
 
-### **Technical Breakthrough**
-- **Quantum-Engineered Surfaces**: Revolutionary repulsive force engineering
-- **Validated Foundation**: 100% UQ-resolved mathematical framework
-- **Integrated Platform**: Seamless ultra-smooth fabrication integration
-- **Comprehensive Theory**: Complete metamaterial Casimir mathematics
+### **Technical Breakthrough** (research-stage framing)
+- **Quantum-Engineered Surfaces**: Research-stage repulsive force engineering
+- **Validated Foundation**: UQ analyses completed for select models; full coverage is ongoing and under active development
+- **Integrated Platform**: Integration work continues; review per-repo integration artifacts
+- **Comprehensive Theory**: Complete metamaterial Casimir mathematics documented; validate model assumptions per-use case
 
 ### Practical Impact (cautious framing)
 - Potential to reduce stiction in precision devices is an active research goal; significant engineering work remains to transition prototypes to robust fielded products. Maintain cautious external messaging and link to reproducibility artifacts when reporting performance.
@@ -334,12 +334,12 @@ u* = arg min Σᵢ [‖xᵢ₊₁ - x_ref‖²_Q + ‖uᵢ‖²_R]
 P(d_min ≤ d(t) ≤ d_max) ≥ 0.95 ∀t ∈ [0,T]
 ```
 
-### **Performance Achievements**
-- ✅ **Sensor Precision**: 0.06 pm/√Hz
-- ✅ **Thermal Uncertainty**: 5 nm
-- ✅ **Vibration Isolation**: 9.7×10¹¹×
-- ✅ **Material Uncertainty**: <4.1%
-- ✅ **Fidelity Score**: ≥95%
+### **Performance Achievements** (reported in select controlled tests; interpret with UQ and reproduction context)
+- **Sensor Precision**: reported 0.06 pm/√Hz in specific setups (see `docs/` for calibration and methods)
+- **Thermal Uncertainty**: reported ~5 nm in limited test conditions; results are sensitive to setup and measurement protocol
+- **Vibration Isolation**: reported isolation factors in specific isolation platforms; evaluate per-test details
+- **Material Uncertainty**: reported <4.1% in selected analyses; depends on measurement and model assumptions
+- **Fidelity Score**: reported ≥95% for specific digital-twin configurations; treat as case-specific until independently reproduced
 
 ### **Real-Time Capabilities**
 - **State Estimation**: <1 μs per update
@@ -348,7 +348,7 @@ P(d_min ≤ d(t) ≤ d_max) ≥ 0.95 ∀t ∈ [0,T]
 - **Model Reduction**: 99% energy capture with 3× compression
 
 ### **Integration Features**
-- **UQ Framework**: 100% compatibility with validated systems
-- **Cross-Repository**: Seamless integration with energy enhancement platforms
-- **Manufacturing Ready**: 90.4% deployment readiness
-- **Commercial Viable**: Scalable to production systems
+- **UQ Framework**: compatibility with integration workflows is under active development; treat claims of full compatibility as work-in-progress
+- **Cross-Repository**: integration efforts are ongoing; review per-repo artifacts for concrete integration tests
+- **Manufacturing Readiness**: deployment-readiness estimates (e.g., 90.4%) are provisional and should be validated with scale-up experiments and QA data
+- **Commercial Viability**: scalability and commercial readiness require formal validation, regulatory review, and manufacturing demonstrations
