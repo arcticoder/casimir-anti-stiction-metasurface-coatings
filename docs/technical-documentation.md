@@ -335,36 +335,36 @@ Cp = (USL - LSL)/(6σ) > 1.33 (process capability)
 ### 6.1 Anti-Stiction Performance Metrics
 
 #### Stiction Force Reduction
-- **Target**: >97% reduction in adhesive forces
+- **Design target (research-stage)**: reductions greater than ~97% in ideal test configurations
 - **Measurement**: Micro-force testing with calibrated cantilevers
-- **Achieved**: 98.2% ± 1.1% stiction reduction
+- **Reported (in-repo experiments/simulations)**: reductions of 98.2% ± 1.1% observed for select samples under controlled conditions; results are highly configuration-, preparation-, and protocol-dependent and should not be treated as guaranteed in other environments.
 
 #### Casimir Force Enhancement
-- **Target**: 10¹⁰× enhancement over conventional surfaces
-- **Measurement**: AFM-based force spectroscopy
-- **Achieved**: 1.2×10¹⁰ × enhancement factor
+- **Design target (research-stage)**: order-of-magnitude enhancements (e.g., up to ~10¹⁰×) are used as a modelling benchmark for select parameter sets
+- **Measurement**: AFM-based force spectroscopy and calibrated simulations
+- **Reported (in-repo experiments/simulations)**: enhancement factors near 1.2×10¹⁰ reported for specific geometries and model assumptions; observed factors vary substantially with geometry, material loss, and measurement method.
 
 #### Surface Hydrophobicity
-- **Target**: Contact angle 110°-160°
+- **Design target (research-stage)**: contact angles in the 110°–160° range for well-formed SAMs
 - **Measurement**: Automated goniometry
-- **Achieved**: θ = 142° ± 5° (highly hydrophobic)
+- **Reported (in-repo experiments)**: contact angles of θ = 142° ± 5° reported for certain chemistries and substrates; reproducibility depends on SAM formation protocol and substrate preparation.
 
 ### 6.2 Digital Twin Performance Validation
 
 #### Force Prediction Accuracy
-- **Target**: Force uncertainty < 1% of measured value
-- **Measurement**: Comparison with calibrated force sensors
-- **Achieved**: σ_F/F_measured = 0.7% ± 0.2%
+- **Design target (research-stage)**: aim for force prediction uncertainty below ~1% in tightly controlled validation cases
+- **Measurement**: Comparison with calibrated force sensors and cross-validation with simulation
+- **Reported (in-repo experiments/simulations)**: σ_F/F_measured = 0.7% ± 0.2% for selected validation datasets; performance depends on sensor configuration, model fidelity, and validation coverage.
 
 #### State Synchronization
-- **Target**: Digital-physical state sync <10 µs
+- **Design target (research-stage)**: sub-10 µs synchronization for tightly controlled lab setups
 - **Measurement**: Real-time timestamp analysis
-- **Achieved**: 8.2 µs ± 1.5 µs synchronization latency
+- **Reported (in-repo experiments)**: 8.2 µs ± 1.5 µs synchronization latency observed in test harnesses; real-time performance will vary with hardware and network conditions.
 
 #### UQ Validation Results
-- **Coverage Probability**: 95.4% ± 1.8% (target: 95%)
-- **Correlation Accuracy**: |ρ_measured - ρ_model| < 0.05
-- **Calibration χ²**: p-value = 0.31 (well-calibrated)
+- **Reported coverage**: coverage probability reported as 95.4% ± 1.8% on validation datasets (target: 95%), subject to the assumptions and calibration dataset used
+- **Correlation accuracy**: reported |ρ_measured - ρ_model| < 0.05 for analysed cases
+- **Calibration χ²**: reported p-value = 0.31 on the calibration set; these statistics reflect the validation datasets and should be re-evaluated when extending to new operating envelopes
 
 ### 6.3 Multi-Physics Coupling Validation
 
